@@ -4,7 +4,6 @@
 
 import datetime
 import sys
-import urllib2
 import xml.sax
 import copy
 from optparse import OptionParser
@@ -30,14 +29,6 @@ def add_options_to_option_parser(option_parser):
                              default="http://www.signbank.org/SignPuddle1.5/export.php?ui=8&sgn=53&ex_source=All&action=Download",
                              dest="downloadSource",
                              help="If no SPML file is provided, we download it from here  [http://www.signbank.org/SignPuddle1.5/export.php?ui=8&sgn=53&ex_source=All&action=Download]")
-    option_parser.add_option("--modality", dest="modality",
-                             help="provide a comma-separated list of modalities that will be extracted. ex: fingerorientation,palmorientation,handshape")
-
-    option_parser.add_option("--vocabFile", dest="vocab", help="pass a vocab File")
-    option_parser.add_option("--modality2", dest="modality2",
-                             help="choose a second specific modality [headface|hand|mov]")
-    option_parser.add_option("--modality3", dest="modality3",
-                             help="choose a third specific modality [headface|hand|mov]")
     option_parser.add_option("--minFrequency", dest="minFrequency", help="give a minimum Frequency. implies combination")
     option_parser.add_option("-r", "--rotInvariant", action="store_true", dest="rotInvariant",
                              help="perform calculation rotation invariant (consider only first 4 letters of id)")
@@ -137,6 +128,10 @@ class XmlResultHandler(xml.sax.ContentHandler):
                         }, "left": {
                             "shape": [], "fingerorientation": [], "palmorientation": []
                         }
+                    },
+                    "movement": {
+                        "right": [],
+                        "left": []
                     }
                 }
             }
@@ -203,7 +198,10 @@ def main(argv):
     global options
     (options, args) = option_parser.parse_args()
     check_args(args, option_parser)
+
     if options.spml is None:
+
+        import urllib2
         if options.verbose:
             print "downloading lexicon from", options.downloadSource
         response = urllib2.urlopen(options.downloadSource)
@@ -224,15 +222,24 @@ def main(argv):
     spmldict = get_subunits(spmldict, options.verbose)
 
     for id in spmldict:
+
         if (spmldict[id]["subunits"]["hands"] != []):
             for orth in spmldict[id]["transcription"]:
                 if orth[0:4] == "rwth":
                     orth = " ".join(spmldict[id]["text"][0])
-                print  orth.encode('utf8'), "#",
-                for (index, shape) in enumerate(spmldict[id]["subunits"]["hands"]["right"]["shape"]):
-                    print  "%s-F%s-P%s" % (
-                        shape, spmldict[id]["subunits"]["hands"]["right"]["fingerorientation"][index],
-                        spmldict[id]["subunits"]["hands"]["right"]["palmorientation"][index]),
+                print  orth.encode('utf8'),
+                print "#movement-right %s" % (" ".join(spmldict[id]["subunits"]["movement"]["right"])),
+                print "#movement-left %s" % (" ".join(spmldict[id]["subunits"]["movement"]["left"])),
+                print "#handshape-right %s" % (" ".join(spmldict[id]["subunits"]["hands"]["right"]["shape"])),
+                print "#handshape-left %s" % (" ".join(spmldict[id]["subunits"]["hands"]["left"]["shape"])),
+                print "#fingerorient-right %s" % (" ".join(spmldict[id]["subunits"]["hands"]["right"]["fingerorientation"])),
+                print "#fingerorient-left %s" % (" ".join(spmldict[id]["subunits"]["hands"]["left"]["fingerorientation"])),
+                print "#palmorient-right %s" % (" ".join(spmldict[id]["subunits"]["hands"]["right"]["palmorientation"])),
+                print "#palmorient-left %s" % (" ".join(spmldict[id]["subunits"]["hands"]["left"]["palmorientation"])),
+                # for (index, shape) in enumerate(spmldict[id]["subunits"]["hands"]["right"]["shape"]):
+                #     print  "%s-F%s-P%s" % (
+                #         shape, spmldict[id]["subunits"]["hands"]["right"]["fingerorientation"][index],
+                #         spmldict[id]["subunits"]["hands"]["right"]["palmorientation"][index]),
                 print ""
 
 

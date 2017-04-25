@@ -286,8 +286,7 @@ def get_subunits(spml, verbose):
     for id in spml:
         assert len(spml[id]) >= 3, "not a valid entry"
         if verbose:
-            print id, spml[id]
-            print "%10s %10s %10s %15s %15s %10s %10s %10s %10s" %("ksw", "modality", "side", "fingerorient", "palmorient", "shape", "xcoord", "ycoord", "entry")
+            print "%10s %10s %10s %15s %15s %10s %10s %10s %10s %10s" %("ksw", "modality", "side", "fingerorient", "palmorient", "shape", "movement", "xcoord", "ycoord", "entry")
 
         fsw = spml[id]["fswcode"]
         transcription = spml[id]["transcription"]
@@ -301,7 +300,8 @@ def get_subunits(spml, verbose):
             finger_orientation = ""
             palm_orientation = ""
             shape = ""
-            # currently only hands will be output
+            movement = ""
+            # currently only hand and movement modality will be output
             # todo: add other modalities
             if modality == "hands":
                 shape = get_handshape(ksw)
@@ -315,11 +315,20 @@ def get_subunits(spml, verbose):
                 spml[id]["subunits"]["hands"][side]["shape"].append(shape)
                 spml[id]["subunits"]["hands"][side]["fingerorientation"].append(finger_orientation)
                 spml[id]["subunits"]["hands"][side]["palmorientation"].append(palm_orientation)
-
+            elif modality == "movement":
+                if right_movement(ksw):
+                    side = "right"
+                else:
+                    side = "left"
+                movement = map_movement_size(ksw)
+                movement=build_movement_from_basic_movement(movement)
+                spml[id]["subunits"]["movement"][side].extend(movement.split(" "))
             if verbose:
                 for word in transcription:
                     #print "%10s %10s %10s %10s %10s %10s %10s %10s %10s" %(unicode(word).encode('utf8'), modality, side, finger_orientation, palm_orientation, shape, ksw, xcoord, ycoord)
-                    print "%10s %10s %10s %15s %15s %10s %10s %10s %10s" % (unicode(ksw).encode('utf8'), modality, side, finger_orientation, palm_orientation, shape, xcoord, ycoord, unicode(word).encode('utf8'))
+                    print "%10s %10s %10s %15s %15s %10s %10s %10s %10s %10s" % (unicode(ksw).encode('utf8'), modality, side, finger_orientation, palm_orientation, shape, unicode(movement).encode('utf8'), xcoord, ycoord, unicode(word).encode('utf8'))
+        if verbose:
+            print id, spml[id]
 
 
 
